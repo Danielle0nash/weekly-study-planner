@@ -2,74 +2,73 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Weekly Study Planner</title>
 <style>
 body{font-family:Arial;background:#eff6ff;padding:25px}
-main{max-width:700px;margin:auto;background:white;padding:30px;border-radius:16px}
-select,input{width:100%;padding:12px;margin:8px 0;box-sizing:border-box;border:1px solid #93c5fd;border-radius:7px}
-button{background:#2563eb;color:white;border:0;padding:12px 18px;border-radius:7px;cursor:pointer}
-.entry{background:#dbeafe;padding:15px;margin-top:10px;border-radius:8px;overflow-wrap:anywhere}
+main{max-width:650px;margin:auto;background:white;padding:25px;border-radius:15px}
+input,select{width:100%;padding:12px;margin:8px 0;box-sizing:border-box}
+button{padding:11px 16px;background:#2563eb;color:white;border:0;border-radius:7px;cursor:pointer}
+.task{padding:12px;background:#dbeafe;margin:9px 0;border-radius:8px;display:flex;gap:10px;align-items:center}
+.task span{flex:1}
+.done{text-decoration:line-through;color:#64748b}
 </style>
 </head>
 <body>
 <main>
 <h1>Weekly Study Planner</h1>
-<p>Organize your weekly learning schedule.</p>
+<input id="subject" placeholder="Enter study task">
 <select id="day">
-<option>Monday</option>
-<option>Tuesday</option>
-<option>Wednesday</option>
-<option>Thursday</option>
-<option>Friday</option>
-<option>Saturday</option>
+<option>Monday</option><option>Tuesday</option>
+<option>Wednesday</option><option>Thursday</option>
+<option>Friday</option><option>Saturday</option>
 <option>Sunday</option>
 </select>
-<input id="subject" placeholder="Subject or study topic">
-<input id="minutes" type="number" min="1" placeholder="Study duration in minutes">
-<button onclick="addPlan()">Add Study Plan</button>
-<h3 id="summary"></h3>
-<div id="plans"></div>
+<button onclick="addTask()">Add Task</button>
+<h2>My Weekly Tasks</h2>
+<div id="tasks"></div>
 </main>
 <script>
-const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
-let plans=JSON.parse(localStorage.getItem("weeklyStudyPlans")||"[]");
+let tasks=JSON.parse(localStorage.getItem("studyTasks")||"[]");
 function save(){
- localStorage.setItem("weeklyStudyPlans",JSON.stringify(plans));
+ localStorage.setItem("studyTasks",JSON.stringify(tasks));
  render();
 }
-function addPlan(){
- const day=document.getElementById("day").value;
- const subject=document.getElementById("subject");
- const minutes=document.getElementById("minutes");
- const duration=Number(minutes.value);
- if(!subject.value.trim()||duration<=0||!Number.isInteger(duration))return;
- plans.push({day,subject:subject.value.trim(),duration});
- subject.value=minutes.value="";
+function addTask(){
+ const field=document.getElementById("subject");
+ const subject=field.value.trim();
+ if(!subject)return;
+ tasks.push({subject,day:document.getElementById("day").value,done:false});
+ field.value="";
  save();
 }
 function render(){
- const list=document.getElementById("plans");
+ const list=document.getElementById("tasks");
  list.innerHTML="";
- plans.sort((a,b)=>days.indexOf(a.day)-days.indexOf(b.day));
- plans.forEach((plan,i)=>{
-  const item=document.createElement("div");
-  item.className="entry";
-  const title=document.createElement("h3");
-  title.textContent=plan.day+" — "+plan.subject;
-  const time=document.createElement("p");
-  time.textContent=plan.duration+" minutes";
-  const btn=document.createElement("button");
-  btn.textContent="Remove";
-  btn.onclick=()=>{
-   plans.splice(i,1);
-   save();
-  };
-  item.append(title,time,btn);
-  list.appendChild(item);
+ const days=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+ days.forEach(day=>{
+  const heading=document.createElement("h3");
+  heading.textContent=day;
+  list.appendChild(heading);
+  tasks.forEach((task,i)=>{
+   if(task.day!==day)return;
+   const row=document.createElement("div");
+   row.className="task";
+   const check=document.createElement("input");
+   check.type="checkbox";
+   check.checked=task.done;
+   check.style.width="auto";
+   check.onchange=()=>{tasks[i].done=check.checked;save();};
+   const span=document.createElement("span");
+   span.textContent=task.subject;
+   if(task.done)span.className="done";
+   const del=document.createElement("button");
+   del.textContent="Delete";
+   del.onclick=()=>{tasks.splice(i,1);save();};
+   row.append(check,span,del);
+   list.appendChild(row);
+  });
  });
- const total=plans.reduce((sum,p)=>sum+p.duration,0);
- document.getElementById("summary").textContent="Total weekly study: "+total+" minutes";
 }
 render();
 </script>
